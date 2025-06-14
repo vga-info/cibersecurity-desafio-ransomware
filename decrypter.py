@@ -1,22 +1,38 @@
 import os
 import pyaes
+from datetime import datetime
 
-## abrir o arquivo criptografado
-file_name = "teste.txt.ransomwaretroll"
-file = open(file_name, "rb")
-file_data = file.read()
-file.close()
+base_dir = os.path.join(os.path.dirname(__file__), "desafio")
+log_path = os.path.join(os.path.dirname(__file__), "decrypt.log")
 
-## chave para descriptografia
 key = b"testeransomwares"
-aes = pyaes.AESModeOfOperationCTR(key)
-decrypt_data = aes.decrypt(file_data)
 
-## remover o arquivo criptografado
-os.remove(file_name)
+def log(mensagem):
+    with open(log_path, "a") as log_file:
+        log_file.write(f"[{datetime.now()}] {mensagem}\n")
 
-## criar o arquivo descriptografado
-new_file = "teste.txt"
-new_file = open(f'{new_file}', "wb")
-new_file.write(decrypt_data)
-new_file.close()
+def descriptografar_arquivo(file_path):
+    try:
+        with open(file_path, "rb") as file:
+            file_data = file.read()
+
+        aes = pyaes.AESModeOfOperationCTR(key)
+        decrypted_data = aes.decrypt(file_data)
+
+        os.remove(file_path)
+
+        new_file_path = file_path.replace(".ransomwaretroll", "")
+        with open(new_file_path, "wb") as new_file:
+            new_file.write(decrypted_data)
+
+        log(f"Descriptografado: {file_path}")
+        print(f"[OK] {new_file_path}")
+    except Exception as e:
+        log(f"Erro ao descriptografar {file_path}: {e}")
+        print(f"[ERRO] {file_path}")
+
+for root, dirs, files in os.walk(base_dir):
+    for file_name in files:
+        if file_name.endswith(".ransomwaretroll"):
+            full_path = os.path.join(root, file_name)
+            descriptografar_arquivo(full_path)

